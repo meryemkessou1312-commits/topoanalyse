@@ -1,0 +1,6 @@
+*.tif 
+__pycache__/ 
+*.pyc 
+.env 
+venv/ 
+finale_optimized.tif 

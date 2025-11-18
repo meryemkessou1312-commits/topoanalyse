@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>Analyse Spatiale et Environnementale – Drâa-Tafilalet</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap');
+
+    * { 
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+:root {
+    --global-scale: 0.75;   /* Tu peux ajuster: 0.80 / 0.85 / 0.70 */
+}
+
+/* Appliquer le scale à toutes les tailles */
+* {
+    font-size: calc(1rem * var(--global-scale));
+}
+
+body, html {
+    zoom: var(--global-scale);
+}
+
+    /* 🎯 CURSEUR PERSONNALISÉ */
+    body {
+      cursor: none;
+    }
+
+    .custom-cursor {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #06b6d4;
+      border-radius: 50%;
+      position: fixed;
+      pointer-events: none;
+      z-index: 999999;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+      mix-blend-mode: difference;
+    }
+
+    .custom-cursor.hover {
+      transform: scale(1.8);
+      border-color: #ec4899;
+      background: rgba(236, 72, 153, 0.2);
+    }
+
+    html, body {
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      position: fixed;
+      top: 0;
+      left: 0;
+    }
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+    zoom: 1 !important;   /* Empêche le zoom automatique */
+}
+body {
+    transform: none !important;
+    scale: 1 !important;
+}
+
+    body {
+      background-image: url('errachidia.jpg');
+      background-size: cover;
+      background-position: center center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      position: fixed;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    /* 🌊 EFFET PARALLAX */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -10%;
+      left: -10%;
+      right: -10%;
+      bottom: -10%;
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(139, 92, 246, 0.1));
+      z-index: 0;
+      animation: parallaxFloat 20s ease-in-out infinite;
+    }
+
+    @keyframes parallaxFloat {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      25% { transform: translate(-2%, 2%) scale(1.02); }
+      50% { transform: translate(2%, -2%) scale(1.01); }
+      75% { transform: translate(-2%, -2%) scale(1.02); }
+    }
+
+    /* ✨ GLASSMORPHISM PREMIUM */
+    .glass-ultra {
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(40px) saturate(180%) brightness(110%);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4),
+        0 0 40px rgba(6, 182, 212, 0.1);
+      transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .glass-ultra:hover {
+      background: rgba(255, 255, 255, 0.18);
+      border-color: rgba(6, 182, 212, 0.5);
+      box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6),
+        0 0 60px rgba(6, 182, 212, 0.3);
+      transform: translateY(-5px);
+    }
+
+    /* 🎬 ANIMATIONS D'ENTRÉE */
+    .fade-in-up {
+      animation: fadeInUp 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      opacity: 0;
+    }
+
+    @keyframes fadeInUp {
+      from { 
+        opacity: 0; 
+        transform: translateY(30px); 
+      }
+      to { 
+        opacity: 1; 
+        transform: translateY(0); 
+      }
+    }
+
+    .fade-in-left {
+      animation: fadeInLeft 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      opacity: 0;
+    }
+
+    @keyframes fadeInLeft {
+      from { 
+        opacity: 0; 
+        transform: translateX(-30px); 
+      }
+      to { 
+        opacity: 1; 
+        transform: translateX(0); 
+      }
+    }
+
+    .fade-in-right {
+      animation: fadeInRight 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      opacity: 0;
+    }
+
+    @keyframes fadeInRight {
+      from { 
+        opacity: 0; 
+        transform: translateX(30px); 
+      }
+      to { 
+        opacity: 1; 
+        transform: translateX(0); 
+      }
+    }
+
+    /* ONGLETS AVEC TRANSITION FLUIDE */
+    .tab-button {
+      position: relative;
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      border-bottom: 3px solid transparent;
+      overflow: hidden;
+    }
+
+    .tab-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.3), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .tab-button:hover::before {
+      left: 100%;
+    }
+
+    .tab-button.active {
+      border-bottom-color: #06b6d4;
+      background: rgba(6, 182, 212, 0.2);
+      color: #06b6d4;
+      font-weight: 800;
+      transform: scale(1.05);
+      box-shadow: 0 10px 30px rgba(6, 182, 212, 0.3);
+    }
+
+    .tab-button:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: translateY(-3px);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+      animation: tabSlide 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes tabSlide {
+      from { 
+        opacity: 0; 
+        transform: translateX(20px) scale(0.98); 
+      }
+      to { 
+        opacity: 1; 
+        transform: translateX(0) scale(1); 
+      }
+    }
+
+    /* 💎 HEADER PREMIUM */
+    header {
+      position: relative;
+      overflow: hidden;
+      flex-shrink: 0;
+      min-height: 80px;
+    }
+
+    header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 200%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      animation: headerShine 4s infinite;
+    }
+
+    @keyframes headerShine {
+      0% { left: -100%; }
+      50%, 100% { left: 100%; }
+    }
+
+    .pulse-glow {
+      animation: pulseGlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { 
+        opacity: 1;
+        box-shadow: 0 0 20px rgba(6, 182, 212, 0.6), 0 0 40px rgba(6, 182, 212, 0.3);
+      }
+      50% { 
+        opacity: 0.8;
+        box-shadow: 0 0 40px rgba(6, 182, 212, 0.9), 0 0 80px rgba(6, 182, 212, 0.5);
+      }
+    }
+
+    /* 🎨 STAT CARDS ULTRA */
+    .stat-card-ultra {
+      position: relative;
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .stat-card-ultra::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(6, 182, 212, 0.1), transparent);
+      transform: rotate(45deg);
+      transition: all 0.6s ease;
+    }
+
+    .stat-card-ultra:hover::before {
+      top: 150%;
+      left: 150%;
+    }
+
+    .stat-card-ultra:hover {
+      transform: translateY(-10px) scale(1.05);
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .spinner {
+      border: 4px solid rgba(6, 182, 212, 0.2);
+      border-top: 4px solid #06b6d4;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .number-pop {
+      animation: numberPop 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+
+    @keyframes numberPop {
+      0% { transform: scale(0); opacity: 0; }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Solar Cards */
+    .solar-card-premium {
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(20px) saturate(150%);
+      border-radius: 22px;
+      padding: 28px;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.15);
+      border: 1px solid rgba(253, 224, 71, 0.35);
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .solar-card-premium:hover {
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: 0 35px 70px rgba(251, 191, 36, 0.4);
+    }
+
+    .solar-label {
+      font-size: 0.85rem;
+      color: #6b7280;
+      font-weight: 600;
+    }
+
+    .solar-value {
+      font-size: 2.4rem;
+      font-weight: 900;
+      margin-top: 8px;
+    }
+
+    .solar-gauge {
+      width: 180px;
+      height: 180px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .solar-gauge svg {
+      transform: rotate(-90deg);
+    }
+
+    .solar-gauge-bg {
+      fill: none;
+      stroke: rgba(251, 191, 36, 0.20);
+      stroke-width: 14px;
+    }
+
+    .solar-gauge-fill {
+      fill: none;
+      stroke: url(#solarGradient);
+      stroke-width: 14px;
+      stroke-linecap: round;
+      stroke-dasharray: 471;
+      stroke-dashoffset: 471;
+      transition: stroke-dashoffset 1s ease-out;
+    }
+
+    .solar-score-text {
+      position: absolute;
+      top: 52%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 42px;
+      font-weight: 900;
+      color: #f59e0b;
+    }
+
+    .orientation-card {
+      background: linear-gradient(135deg, #fff7dc, #ffe4b5);
+      padding: 14px 22px;
+      border-radius: 16px;
+      border: 2px solid #facc15;
+      display: inline-block;
+      box-shadow: 0 8px 20px rgba(251, 191, 36, 0.25);
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .orientation-card:hover {
+      transform: scale(1.1) rotate(2deg);
+      box-shadow: 0 20px 40px rgba(251, 146, 60, 0.5);
+    }
+
+    /* SCROLLBAR RAINBOW */
+    ::-webkit-scrollbar {
+      width: 10px;
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+      border-radius: 50px;
+    }
+
+    ::-webkit-scrollbar:hover {
+      background: rgba(255,255,255,0.05);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #06b6d4, #3b82f6, #8b5cf6, #ec4899, #f59e0b);
+      border-radius: 50px;
+      border: 2px solid rgba(255,255,255,0.5);
+      box-shadow: 0 0 12px rgba(255,255,255,0.6);
+      opacity: 0;
+      transition: opacity .3s ease;
+    }
+
+    ::-webkit-scrollbar:hover ::-webkit-scrollbar-thumb,
+    ::-webkit-scrollbar-thumb:hover {
+      opacity: 1;
+    }
+
+    /* MODE NUIT */
+    .dark body {
+      background: radial-gradient(circle at top, #0f0f18, #000000);
+    }
+
+    .dark header {
+      background: linear-gradient(to right, #1a1a2e, #1f2d45, #3a3a50) !important;
+    }
+
+    .dark .glass-ultra {
+      background: rgba(20,20,25,0.6) !important;
+      border-color: rgba(255,255,255,0.1) !important;
+    }
+
+    .dark .tab-button {
+      color: #ddd !important;
+    }
+
+    .dark .tab-button.active {
+      background: rgba(139, 92, 246, 0.3) !important;
+      border-bottom-color: #a78bfa !important;
+      color: #c4b5fd !important;
+    }
+
+    .dark h1, .dark h2, .dark h3, .dark p, .dark span {
+      color: #f3f4f6 !important;
+    }
+
+    /* PRELOADER AVANCÉ */
+    #preloader {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.7)),
+                  url('montagne.jpeg');
+      background-size: cover;
+      background-position: center;
+      backdrop-filter: blur(8px) saturate(120%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 999999;
+      animation: preloaderFadeOut 1.2s ease forwards;
+      animation-delay: 7s;
+    }
+
+    #preloader.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .preloader-content {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      color: white;
+      width: 90%;
+      max-width: 1100px;
+      animation: contentSlideUp 1s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+
+    .preloader-content h1 {
+      font-size: 42px;
+      font-weight: 900;
+      margin-bottom: 16px;
+      letter-spacing: 1px;
+      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 40px rgba(6, 182, 212, 0.4);
+      background: linear-gradient(135deg, #06b6d4, #3b82f6, #8b5cf6);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: titleGlow 3s ease-in-out infinite;
+    }
+
+    .preloader-content p {
+      font-size: 16px;
+      opacity: 0.95;
+      margin-bottom: 50px;
+      max-width: 700px;
+      line-height: 1.6;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+      animation: textFade 1s ease forwards 0.3s;
+      opacity: 0;
+    }
+
+    .cards {
+      display: flex;
+      gap: 25px;
+      justify-content: center;
+      align-items: stretch;
+      flex-wrap: wrap;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 24px;
+      padding: 32px 28px;
+      width: 270px;
+      backdrop-filter: blur(15px) saturate(180%);
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      cursor: pointer;
+      animation: cardPop 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) backwards;
+    }
+
+    .card:nth-child(1) { animation-delay: 0.6s; }
+    .card:nth-child(2) { animation-delay: 0.8s; }
+    .card:nth-child(3) { animation-delay: 1s; }
+
+    .card:hover {
+      transform: translateY(-12px) scale(1.05);
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(6, 182, 212, 0.6);
+      box-shadow: 0 20px 60px rgba(6, 182, 212, 0.4), 0 0 40px rgba(6, 182, 212, 0.3);
+    }
+
+    .card img {
+      width: 85px;
+      height: 85px;
+      margin-bottom: 20px;
+      filter: drop-shadow(0 4px 15px rgba(6, 182, 212, 0.5));
+      transition: all 0.4s ease;
+    }
+
+    .card:hover img {
+      transform: scale(1.15) rotate(5deg);
+      filter: drop-shadow(0 8px 25px rgba(6, 182, 212, 0.8));
+    }
+
+    .card h3 {
+      font-size: 20px;
+      font-weight: 800;
+      color: white;
+      margin-bottom: 12px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .card p {
+      color: rgba(255, 255, 255, 0.85);
+      font-size: 14px;
+      line-height: 1.5;
+      text-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
+    }
+
+    .progress-bar-container {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 300px;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, #06b6d4, #3b82f6, #8b5cf6);
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.8);
+      animation: progressFill 7s linear forwards;
+    }
+
+    .particles {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: rgba(6, 182, 212, 0.6);
+      border-radius: 50%;
+      box-shadow: 0 0 10px rgba(6, 182, 212, 0.8);
+      animation: particleFloat 8s ease-in-out infinite;
+    }
+
+    .particle:nth-child(1) { left: 10%; animation-delay: 0s; }
+    .particle:nth-child(2) { left: 25%; animation-delay: 1.5s; }
+    .particle:nth-child(3) { left: 40%; animation-delay: 3s; }
+    .particle:nth-child(4) { left: 60%; animation-delay: 2s; }
+    .particle:nth-child(5) { left: 75%; animation-delay: 4s; }
+    .particle:nth-child(6) { left: 90%; animation-delay: 1s; }
+
+    @keyframes preloaderFadeOut {
+      to { opacity: 0; visibility: hidden; transform: scale(1.1); }
+    }
+
+    @keyframes contentSlideUp {
+      from { opacity: 0; transform: translateY(50px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes titleGlow {
+      0%, 100% { text-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 40px rgba(6, 182, 212, 0.4); }
+      50% { text-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 60px rgba(6, 182, 212, 0.8); }
+    }
+
+    @keyframes textFade {
+      to { opacity: 0.95; }
+    }
+
+    @keyframes cardPop {
+      from { opacity: 0; transform: scale(0.5) translateY(30px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    @keyframes progressFill {
+      to { width: 100%; }
+    }
+
+    @keyframes particleFloat {
+      0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(-100vh) translateX(50px); opacity: 0; }
+    }
+    
+  </style>
+</head>
+<body>
+
+<!-- 🖱️ CURSEUR PERSONNALISÉ -->
+<div class="custom-cursor"></div>
+
+<!-- PRELOADER -->
+<div id="preloader">
+  <div class="particles">
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+  </div>
+
+  <div class="preloader-content">
+    <h1>Bienvenue dans le Monde de la Topographie</h1>
+    <p>Analyse topographique ultra-rapide de la région Drâa-Tafilalet, intégrant Profil topographique, Exposition solaire, Pente, Orientation et Statistiques avancées.</p>
+
+    <div class="cards">
+      <div class="card">
+        <img src="https://cdn-icons-png.flaticon.com/512/854/854878.png" alt="Carte Interactive">
+        <h3>Carte Interactive</h3>
+        <p>Dessiner un tracé et générer un profil instantané.</p>
+      </div>
+
+      <div class="card">
+        <img src="https://cdn-icons-png.flaticon.com/512/1828/1828884.png" alt="Profil">
+        <h3>Profil Topographique</h3>
+        <p>Graphique, statistiques et extraction avancée.</p>
+      </div>
+
+      <div class="card">
+        <img src="https://cdn-icons-png.flaticon.com/512/869/869869.png" alt="Soleil">
+        <h3>Exposition & Soleil</h3>
+        <p>Orientation dominante et score solaire.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="progress-bar-container">
+    <div class="progress-bar"></div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header class="relative z-10 bg-gradient-to-r from-slate-900 via-blue-900 to-cyan-600 shadow-2xl border-b border-cyan-300/40 py-5 fade-in-up" style="animation-delay: 0.2s">
+  <div class="max-w-7xl mx-auto px-6 flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <div class="w-14 h-14 bg-cyan-400/20 border border-cyan-300/40 rounded-2xl flex items-center justify-center shadow-[0_0_20px_#06b6d4] pulse-glow">
+        <svg class="w-8 h-8 text-cyan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4zM8 21l4-4 4 4"/>
+        </svg>
+      </div>
+
+      <div>
+        <h1 class="text-3xl font-black text-white tracking-wide drop-shadow-lg">
+          Analyse Spatiale et Environnementale
+        </h1>
+        <p class="text-sm text-cyan-200 mt-1">Drâa-Tafilalet · Analyse Spatiale ⚡</p>
+      </div>
+    </div>
+
+    <div class="px-5 py-2 bg-cyan-300/20 text-cyan-100 border border-cyan-300/40 rounded-full font-bold text-xs shadow-[0_0_15px_#0ea5e9]">
+      WPS: localhost:5000
+    </div>
+
+    <button id="darkModeBtn" class="px-4 py-2 rounded-full bg-white/10 border border-white/30 text-white text-xs font-bold backdrop-blur-md hover:bg-white/20 transition-all duration-300 shadow-lg flex items-center gap-2">
+      🌙 <span>Mode Nuit</span>
+    </button>
+  </div>
+</header>
+
+<!-- ONGLETS -->
+<div class="relative z-10 px-6 pt-4 fade-in-up" style="animation-delay: 0.4s">
+  <div class="max-w-7xl mx-auto">
+    <div class="flex gap-3">
+      <button class="tab-button active px-8 py-3 rounded-t-2xl text-white font-bold text-sm border border-white/20 bg-white/5" onclick="switchTab('carte')">
+        🗺️ CARTE
+      </button>
+      <button class="tab-button px-8 py-3 rounded-t-2xl text-white font-bold text-sm border border-white/20 bg-white/5" onclick="switchTab('profil')">
+        📊 PROFIL
+      </button>
+      <button class="tab-button px-8 py-3 rounded-t-2xl text-white font-bold text-sm border border-white/20 bg-white/5" onclick="switchTab('soleil')">
+        ☀️ SOLEIL
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTAINER -->
+<main class="relative z-10 px-6 pb-6 fade-in-up" style="flex: 1; overflow: hidden; animation-delay: 0.6s; min-height: 0;">
+  <div class="max-w-7xl mx-auto h-full" style="max-height: 100%;">
+    <div class="glass-ultra rounded-b-3xl rounded-tr-3xl shadow-xl h-full overflow-auto border border-white/20" style="max-height: 100%;">
+
+      <!-- ONGLET 1: CARTE -->
+      <div id="tab-carte" class="tab-content active p-6 h-full">
+        <div class="h-full flex flex-col">
+         <div id="map" style="flex: 1; min-height: 0; height: calc(100vh - 280px); border-radius: 20px; box-shadow: 0 15px 50px rgba(0,0,0,0.3); position: relative;">
+            <!-- Bouton réinitialiser la vue -->
+            <button id="resetMapBtn" onclick="resetMapView()" style="position: absolute; top: 80px; left: 10px; z-index: 1000; background: white; padding: 8px 12px; border-radius: 8px; border: 2px solid #06b6d4; box-shadow: 0 4px 15px rgba(0,0,0,0.2); cursor: pointer; font-size: 12px; font-weight: bold; color: #06b6d4; transition: all 0.3s ease;">
+              Réinitialiser
+            </button>
+          </div>
+          
+          <div class="mt-4 grid grid-cols-3 gap-4">
+            <div class="flex items-center gap-3 p-3 bg-purple-50 rounded-xl border border-purple-200 glass-ultra">
+              <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
+                <span class="text-white text-xl">⚡</span>
+              </div>
+              <div class="text-xs">
+                <p class="font-bold text-gray-800">Mode d'emploi</p>
+                <p class="text-gray-600">Tracez une ligne</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3 p-3 bg-blue-50 rounded-xl border border-blue-200 glass-ultra">
+              <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"/>
+                </svg>
+              </div>
+              <div class="text-xs">
+                <p class="font-bold text-gray-800">Outils</p>
+                <p class="text-gray-600">Dessiner/Éditer</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3 p-3 bg-green-50 rounded-xl border border-green-200 glass-ultra">
+              <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center shadow-lg">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+              </div>
+              <div class="text-xs">
+                <p class="font-bold text-gray-800">Performance</p>
+                <p class="text-gray-600">Ultra-rapide</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ONGLET 2: PROFIL -->
+      <div id="tab-profil" class="tab-content p-6">
+        <div class="space-y-6">
+          
+          <!-- Stats -->
+          <div id="statsGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <!-- Dynamique -->
+          </div>
+
+          <!-- Graphique -->
+          <div class="bg-white rounded-3xl p-6 shadow-xl border border-gray-200 glass-ultra">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
+                  <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
+                  </svg>
+                </div>
+                <h2 class="text-xl font-black text-gray-800">Profil Topographique</h2>
+              </div>
+              <button id="downloadCsvBtn" class="px-6 py-3 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-xs font-bold shadow-xl disabled:opacity-40 transition-all duration-300 hover:scale-105" disabled>
+                <span class="flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                  </svg>
+                  Télécharger CSV
+                </span>
+              </button>
+            </div>
+
+            <div id="profileChart" style="min-height: 400px;"></div>
+
+            <div id="status" class="mt-4 px-5 py-3 rounded-xl bg-gradient-to-r from-cyan-50 to-blue-50 border-2 border-cyan-200">
+              <div class="flex items-center gap-3">
+                <div id="statusIcon" class="w-7 h-7 rounded-full bg-cyan-200 flex items-center justify-center">
+                  <svg class="w-5 h-5 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+                <p id="statusText" class="text-sm text-gray-800 font-bold">
+                  Dessinez une ligne pour afficher le profil
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ONGLET 3: SOLEIL -->
+      <div id="tab-soleil" class="tab-content p-8 space-y-10">
+
+        <!-- Bandeau titre -->
+        <div class="bg-gradient-to-r from-yellow-500/80 via-orange-500/80 to-amber-400/80 rounded-3xl shadow-2xl p-8 border border-yellow-300/60 text-white">
+          <div class="flex items-center gap-6">
+            <div class="w-20 h-20 rounded-2xl bg-white/20 flex items-center justify-center shadow-xl">
+              <span class="text-6xl">☀️</span>
+            </div>
+            <div>
+              <h2 class="text-4xl font-extrabold drop-shadow-lg">Exposition Solaire</h2>
+              <p class="text-sm opacity-90 mt-1">Analyse d'orientation, pentes & ensoleillement</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats principales -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="solar-card-premium">
+            <p class="solar-label">Orientation dominante</p>
+            <p id="solarOrientation" class="solar-value text-orange-600">--</p>
+          </div>
+
+          <div class="solar-card-premium">
+            <p class="solar-label">Surface bien exposée (Sud)</p>
+            <p id="solarExposure" class="solar-value text-green-600">--</p>
+          </div>
+        </div>
+
+        <!-- Score animation -->
+        <div class="solar-card-premium py-10">
+          <h3 class="text-center text-xl font-black text-gray-800 mb-6">Score d'Ensoleillement</h3>
+
+          <div class="solar-gauge">
+            <svg width="180" height="180">
+              <defs>
+                <linearGradient id="solarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#fbbf24" />
+                  <stop offset="100%" stop-color="#f97316" />
+                </linearGradient>
+              </defs>
+
+              <circle class="solar-gauge-bg" cx="90" cy="90" r="75"></circle>
+              <circle id="solarGaugeFill" class="solar-gauge-fill" cx="90" cy="90" r="75"></circle>
+            </svg>
+
+            <div id="solarScoreValue" class="solar-score-text">0</div>
+          </div>
+
+          <p class="text-center text-gray-600 mt-4">Potentiel solaire global</p>
+        </div>
+
+        <!-- Histogramme -->
+        <div class="solar-card-premium p-8">
+          <h3 class="text-xl font-bold text-gray-800 mb-4">Répartition des orientations</h3>
+          <div id="solarHistogram" class="flex flex-wrap gap-4"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- FOOTER -->
+<footer class="relative z-10 backdrop-blur-xl bg-slate-900/80 border-t border-white/20 py-2 fade-in-up" style="animation-delay: 0.8s">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="flex flex-col sm:flex-row justify-between items-center gap-2 text-xs text-white/90">
+      <div class="flex items-center gap-2">
+        <span class="font-semibold">Projet WebMapping</span>
+        <span class="opacity-60">·</span>
+        <span>Analyse topographique ultra-rapide ⚡</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-3 py-1 bg-white/10 rounded-full border border-white/20">PyWPS</span>
+        <span class="px-3 py-1 bg-white/10 rounded-full border border-white/20">Leaflet</span>
+        <span class="px-3 py-1 bg-white/10 rounded-full border border-white/20">Drâa-Tafilalet</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+// 🖱️ CURSEUR PERSONNALISÉ
+const cursor = document.querySelector('.custom-cursor');
+document.addEventListener('mousemove', (e) => {
+  cursor.style.left = e.clientX + 'px';
+  cursor.style.top = e.clientY + 'px';
+});
+
+// Effet hover sur les éléments interactifs
+const interactiveElements = document.querySelectorAll('button, a, .card, .tab-button, .stat-card-ultra');
+interactiveElements.forEach(el => {
+  el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+  el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+});
+
+// DARK MODE
+const darkBtn = document.getElementById("darkModeBtn");
+const body = document.documentElement;
+
+if (localStorage.getItem("dark-mode") === "on") {
+  body.classList.add("dark");
+  darkBtn.innerHTML = "☀️ <span>Mode Jour</span>";
+}
+
+darkBtn.addEventListener("click", () => {
+  const isDark = body.classList.toggle("dark");
+  if (isDark) {
+    localStorage.setItem("dark-mode", "on");
+    darkBtn.innerHTML = "☀️ <span>Mode Jour</span>";
+  } else {
+    localStorage.setItem("dark-mode", "off");
+    darkBtn.innerHTML = "🌙 <span>Mode Nuit</span>";
+  }
+});
+
+// SWITCH ONGLETS
+function switchTab(tabName) {
+  document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+  event.target.classList.add('active');
+  document.getElementById(`tab-${tabName}`).classList.add('active');
+
+  // FIX CRITIQUE : Recalculer la taille de la carte après changement d'onglet
+  if (tabName === 'carte') {
+    setTimeout(() => {
+      if (typeof map !== 'undefined') {
+        map.invalidateSize(true);
+        // Recentrer sur la région si elle existe
+        if (typeof regionLayer !== 'undefined') {
+          map.fitBounds(regionLayer.getBounds());
+        }
+      }
+    }, 100);
+  }
+}
+
+// RÉINITIALISER LA CARTE
+function resetMapView() {
+  if (typeof map !== 'undefined') {
+    map.invalidateSize(true);
+    
+    if (typeof regionLayer !== 'undefined') {
+      map.fitBounds(regionLayer.getBounds());
+    } else {
+      map.setView([31.5, -6.5], 6);
+    }
+    
+    // Animation de confirmation
+    const btn = document.getElementById('resetMapBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '✓ Fait !';
+    btn.style.background = '#10b981';
+    btn.style.color = 'white';
+    btn.style.borderColor = '#10b981';
+    
+    setTimeout(() => {
+      btn.innerHTML = originalText;
+      btn.style.background = 'white';
+      btn.style.color = '#06b6d4';
+      btn.style.borderColor = '#06b6d4';
+    }, 1500);
+  }
+}
+
+// LOGIQUE PRINCIPALE
+document.addEventListener("DOMContentLoaded", () => {
+
+  const WPS_URL = "http://localhost:5000/wps";
+  let lastProfile = null;
+
+  // Variables globales pour accès depuis switchTab
+  window.map = L.map("map", {
+    zoomControl: true,
+    attributionControl: true,
+    scrollWheelZoom: true,
+    doubleClickZoom: true,
+    touchZoom: true
+  }).setView([31.0, -5.0], 7);
+  
+  const map = window.map;  // Alias local
+  
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "© OpenStreetMap",
+    maxZoom: 19,
+    tileSize: 256
+  }).addTo(map);
+
+  // Forcer le recalcul de la taille de la carte
+  setTimeout(() => {
+    map.invalidateSize();
+    map.setView([31.5, -6.5], 6);
+  }, 500);
+
+  fetch("DraaTafilalet.geojson")
+    .then(r => r.json())
+    .then(data => {
+      window.regionLayer = L.geoJSON(data, {
+        style: {
+          color: "#8b5cf6",
+          weight: 3,
+          fillOpacity: 0.10,
+          fillColor: "#c084fc"
+        },
+        onEachFeature: (feature, layer) => {
+          let info = `<b style='color:#8b5cf6'>Région Drâa-Tafilalet</b><br>`;
+          for (const k in feature.properties) {
+            info += `<b>${k} :</b> ${feature.properties[k]}<br>`;
+          }
+          layer.bindPopup(info);
+        }
+      }).addTo(map);
+      map.fitBounds(window.regionLayer.getBounds());
+    })
+    .catch(err => console.log("GeoJSON non trouvé"));
+
+  const drawnItems = new L.FeatureGroup();
+  map.addLayer(drawnItems);
+
+  map.addControl(new L.Control.Draw({
+    edit: { featureGroup: drawnItems },
+    draw: { 
+      polygon: false, rectangle: false, circle: false, marker: false, circlemarker: false,
+      polyline: { shapeOptions: { color: "#ec4899", weight: 4 } }
+    }
+  }));
+
+  map.on(L.Draw.Event.CREATED, e => {
+    drawnItems.clearLayers();
+    drawnItems.addLayer(e.layer);
+    const geom = e.layer.toGeoJSON().geometry;
+    requestProfile(geom);
+    requestSolarExposure(geom)
+      .then(result => updateSolarPanel(result))
+      .catch(err => console.error("Erreur solar:", err));
+  });
+
+  function requestProfile(geometry) {
+    updateStatus("⚡ Calcul...", "loading");
+    const startTime = performance.now();
+
+    const xml = `<wps:Execute service="WPS" version="1.0.0"
+      xmlns:wps="http://www.opengis.net/wps/1.0.0"
+      xmlns:ows="http://www.opengis.net/ows/1.1">
+      <ows:Identifier>profil_topo</ows:Identifier>
+      <wps:DataInputs>
+        <wps:Input>
+          <ows:Identifier>line</ows:Identifier>
+          <wps:Data>
+            <wps:ComplexData mimeType="application/vnd.geo+json"><![CDATA[
+${JSON.stringify(geometry)}
+            ]]></wps:ComplexData>
+          </wps:Data>
+        </wps:Input>
+      </wps:DataInputs>
+      <wps:ResponseForm>
+        <wps:RawDataOutput mimeType="application/json">
+          <ows:Identifier>profile</ows:Identifier>
+        </wps:RawDataOutput>
+      </wps:ResponseForm>
+    </wps:Execute>`;
+
+    fetch(WPS_URL, {
+      method: "POST",
+      headers: {"Content-Type": "text/xml"},
+      body: xml
+    })
+    .then(r => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    })
+    .then(result => {
+      const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
+      lastProfile = result.profile;
+      showChart(result.profile);
+      updateDashboard(result.stats);
+      enableDownload(true);
+      updateStatus(`✅ Profil en ${elapsed}s`, "success");
+    })
+    .catch(e => {
+      console.error(e);
+      updateStatus("❌ Erreur", "error");
+    });
+  }
+
+  function requestSolarExposure(geometry) {
+    const xml = `<wps:Execute service="WPS" version="1.0.0"
+      xmlns:wps="http://www.opengis.net/wps/1.0.0"
+      xmlns:ows="http://www.opengis.net/ows/1.1">
+      <ows:Identifier>solar_exposure</ows:Identifier>
+      <wps:DataInputs>
+        <wps:Input>
+          <ows:Identifier>line</ows:Identifier>
+          <wps:Data>
+            <wps:ComplexData mimeType="application/vnd.geo+json"><![CDATA[
+${JSON.stringify(geometry)}
+            ]]></wps:ComplexData>
+          </wps:Data>
+        </wps:Input>
+      </wps:DataInputs>
+      <wps:ResponseForm>
+        <wps:RawDataOutput mimeType="application/json">
+          <ows:Identifier>result</ows:Identifier>
+        </wps:RawDataOutput>
+      </wps:ResponseForm>
+    </wps:Execute>`;
+
+    return fetch(WPS_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/xml" },
+      body: xml
+    })
+    .then(r => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    });
+  }
+
+  function updateSolarPanel(stats) {
+    document.getElementById("solarOrientation").textContent = stats.dominant_orientation;
+    document.getElementById("solarExposure").textContent = `${stats.sun_exposed_pct}%`;
+
+    const score = stats.score || Math.round(stats.sun_exposed_pct);
+    const circumference = 408.4;
+    const offset = circumference - (score / 100) * circumference;
+    
+    document.getElementById("solarScoreValue").textContent = score;
+    document.getElementById("solarGaugeFill").style.strokeDashoffset = offset;
+
+    const histDiv = document.getElementById("solarHistogram");
+    histDiv.innerHTML = stats.histogram.map(h => `
+      <div class="orientation-card">
+        <div class="title">${h.orientation}</div>
+        <div class="value">${h.pct}%</div>
+      </div>
+    `).join("");
+  }
+
+  function showChart(profile) {
+    const x = profile.map(p => p.distance);
+    const y = profile.map(p => p.elevation);
+
+    Plotly.newPlot("profileChart", [{
+      x, y,
+      type: "scatter",
+      mode: "lines+markers",
+      name: "Élévation",
+      line: { color: "#8b5cf6", width: 4, shape: "spline" },
+      marker: { size: 8, color: "#ec4899", line: { color: "white", width: 3 }, symbol: "circle" },
+      fill: "tozeroy",
+      fillcolor: "rgba(139, 92, 246, 0.15)",
+      hovertemplate: '<b>Distance:</b> %{x:.1f} m<br><b>Élévation:</b> %{y:.1f} m<br><extra></extra>'
+    }], {
+      margin: {l: 70, r: 40, t: 40, b: 70},
+      xaxis: { 
+        title: { text: "Distance (m)", font: { size: 16, color: "#374151", family: "Inter", weight: 700 } },
+        gridcolor: "#e5e7eb", showline: true, linecolor: "#9ca3af", linewidth: 2, zeroline: false
+      },
+      yaxis: { 
+        title: { text: "Élévation (m)", font: { size: 16, color: "#374151", family: "Inter", weight: 700 } },
+        gridcolor: "#e5e7eb", showline: true, linecolor: "#9ca3af", linewidth: 2, zeroline: false
+      },
+      plot_bgcolor: "#fafafa",
+      paper_bgcolor: "transparent",
+      font: { family: "Inter", size: 13 },
+      autosize: true,
+      hovermode: 'closest'
+    }, {
+      responsive: true,
+      displayModeBar: true,
+      displaylogo: false,
+      modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d', 'autoScale2d']
+    });
+
+    setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
+  }
+
+  function updateDashboard(stats) {
+    const container = document.getElementById("statsGrid");
+    const statsData = [
+      { icon: "📏", label: "Distance", value: stats.distance_totale_m.toFixed(0), unit: "m", color: "from-blue-500 to-cyan-500" },
+      { icon: "⛰️", label: "Alt. Max", value: stats.alt_max.toFixed(0), unit: "m", color: "from-green-500 to-emerald-500" },
+      { icon: "🏞️", label: "Alt. Min", value: stats.alt_min.toFixed(0), unit: "m", color: "from-orange-500 to-amber-500" },
+      { icon: "📊", label: "Alt. Moy", value: stats.alt_moy.toFixed(0), unit: "m", color: "from-purple-500 to-pink-500" },
+      { icon: "📈", label: "Dénivelé", value: stats.denivele.toFixed(0), unit: "m", color: "from-red-500 to-rose-500" },
+      { icon: "📐", label: "Pente Moy", value: stats.pente_moy_deg.toFixed(1), unit: "°", color: "from-indigo-500 to-purple-500" }
+    ];
+
+    container.innerHTML = statsData.map((stat, i) => `
+      <div class="stat-card-ultra bg-white rounded-2xl p-5 shadow-lg border-2 border-gray-200 hover:border-purple-400 transition-all duration-300" style="animation: fadeInUp 0.6s ease forwards; animation-delay: ${i * 0.1}s; opacity: 0;">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-3xl">${stat.icon}</span>
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+            </svg>
+          </div>
+        </div>
+        <div class="text-xs font-bold text-gray-600 mb-1">${stat.label}</div>
+        <div class="flex items-end gap-1">
+          <span class="text-3xl font-black bg-gradient-to-r ${stat.color} bg-clip-text text-transparent number-pop">${stat.value}</span>
+          <span class="text-sm font-bold text-gray-500 mb-1">${stat.unit}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function updateStatus(msg, type) {
+    const txt = document.getElementById("statusText");
+    const icon = document.getElementById("statusIcon");
+    txt.textContent = msg;
+
+    if (type === "loading") {
+      icon.innerHTML = '<div class="spinner"></div>';
+      icon.className = "w-7 h-7 flex items-center justify-center";
+    } 
+    else if (type === "success") {
+      icon.innerHTML = `<svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+      </svg>`;
+      icon.className = "w-7 h-7 rounded-full bg-green-200 flex items-center justify-center";
+    } 
+    else if (type === "error") {
+      icon.innerHTML = `<svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+      </svg>`;
+      icon.className = "w-7 h-7 rounded-full bg-red-200 flex items-center justify-center";
+    }
+  }
+
+  const dlBtn = document.getElementById("downloadCsvBtn");
+  dlBtn.onclick = () => {
+    if (!lastProfile) return;
+    let csv = "distance,x,y,elevation\n";
+    lastProfile.forEach(p => csv += `${p.distance},${p.x},${p.y},${p.elevation}\n`);
+    const blob = new Blob([csv], {type: "text/csv"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; 
+    a.download = "profil_topographique.csv"; 
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  function enableDownload(b) {
+    dlBtn.disabled = !b;
+  }
+
+  // FIX : Recalculer la carte lors du redimensionnement
+  window.addEventListener('resize', () => {
+    if (typeof map !== 'undefined') {
+      setTimeout(() => {
+        map.invalidateSize(true);
+      }, 200);
+    }
+  });
+});
+
+// PRELOADER
+window.addEventListener("load", () => {
+  setTimeout(() => {
+    const preloader = document.getElementById("preloader");
+    preloader.classList.add("hidden");
+    setTimeout(() => preloader.remove(), 1200);
+  }, 7000);
+});
+</script>
+
+</body>
+</html>
