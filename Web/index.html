@@ -1035,7 +1035,10 @@ function resetMapView() {
 // LOGIQUE PRINCIPALE
 document.addEventListener("DOMContentLoaded", () => {
 
-  const WPS_URL = "https://web-production-6fa24.up.railway.app";
+  // ✅ FIX: URL WPS dynamique
+  const WPS_URL = window.location.origin + "/wps";
+  console.log("WPS URL:", WPS_URL);
+  
   let lastProfile = null;
 
   // Variables globales pour accès depuis switchTab
@@ -1101,11 +1104,14 @@ document.addEventListener("DOMContentLoaded", () => {
     requestProfile(geom);
     requestSolarExposure(geom)
       .then(result => updateSolarPanel(result))
-      .catch(err => console.error("Erreur solar:", err));
+      .catch(err => {
+        console.error("Erreur solar:", err);
+        updateStatus("❌ Erreur exposition solaire", "error");
+      });
   });
 
   function requestProfile(geometry) {
-    updateStatus("⚡ Calcul...", "loading");
+    updateStatus("⚡ Calcul du profil...", "loading");
     const startTime = performance.now();
 
     const xml = `<wps:Execute service="WPS" version="1.0.0"
@@ -1135,20 +1141,22 @@ ${JSON.stringify(geometry)}
       body: xml
     })
     .then(r => {
+      console.log("Response status:", r.status);
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       return r.json();
     })
     .then(result => {
+      console.log("Profile result:", result);
       const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
       lastProfile = result.profile;
       showChart(result.profile);
       updateDashboard(result.stats);
       enableDownload(true);
-      updateStatus(`✅ Profil en ${elapsed}s`, "success");
+      updateStatus(`✅ Profil calculé en ${elapsed}s`, "success");
     })
     .catch(e => {
-      console.error(e);
-      updateStatus("❌ Erreur", "error");
+      console.error("Erreur profil:", e);
+      updateStatus(`❌ Erreur: ${e.message}`, "error");
     });
   }
 
@@ -1180,8 +1188,13 @@ ${JSON.stringify(geometry)}
       body: xml
     })
     .then(r => {
+      console.log("Solar response status:", r.status);
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       return r.json();
+    })
+    .then(result => {
+      console.log("Solar result:", result);
+      return result;
     });
   }
 
