@@ -75,14 +75,10 @@ class SolarExposure(Process):
         """Calcule le score d'ensoleillement selon l'orientation"""
         # Bonus d'ensoleillement par orientation (Maroc = hémisphère nord)
         exposure_scores = {
-            "Sud": 100,   # Meilleure exposition
-            "Sud-Est": 90,
-            "Sud-Ouest": 90,
+            "Sud": 100,
             "Est": 75,
             "Ouest": 75,
-            "Nord-Est": 50,
-            "Nord-Ouest": 50,
-            "Nord": 40    # Moins bonne exposition
+            "Nord": 40
         }
         
         return exposure_scores.get(dominant_orientation, 70)
@@ -96,6 +92,7 @@ class SolarExposure(Process):
             coords = list(line.coords)
             
             print(f"Ligne avec {len(coords)} points")
+            print(f"Coordonnées : {coords[:3]}...")  # Afficher les 3 premiers points
             
             # Calculer l'orientation réelle
             dominant_orientation, orientations = self.calculate_orientation(coords)
@@ -107,11 +104,11 @@ class SolarExposure(Process):
             # Ajuster le score selon le pourcentage de l'orientation dominante
             final_score = round((base_score * sun_exposed_pct / 100) * 0.7 + base_score * 0.3)
             
-            # Créer l'histogramme
+            # Créer l'histogramme (ne garder que les orientations > 0)
             histogram = [
                 {"orientation": k, "pct": v}
-                for k, v in orientations.items()
-                if v > 0  # N'afficher que les orientations présentes
+                for k, v in sorted(orientations.items(), key=lambda x: -x[1])
+                if v > 0
             ]
             
             result = {
@@ -123,8 +120,8 @@ class SolarExposure(Process):
             
             print(f"=== CALCUL SOLAR REUSSI ===")
             print(f"Orientation dominante : {dominant_orientation}")
-            print(f"Pourcentages : {orientations}")
-            print(f"Score : {final_score}")
+            print(f"Répartition : {orientations}")
+            print(f"Score final : {final_score}")
             
             response.outputs['result'].data = json.dumps(result)
             return response
@@ -136,10 +133,10 @@ class SolarExposure(Process):
             
             # Valeurs par défaut en cas d'erreur
             result = {
-                "dominant_orientation": "Sud",
-                "sun_exposed_pct": 50,
-                "score": 70,
-                "histogram": [{"orientation": "Sud", "pct": 50}]
+                "dominant_orientation": "Erreur",
+                "sun_exposed_pct": 0,
+                "score": 0,
+                "histogram": [{"orientation": "Erreur", "pct": 0}]
             }
             response.outputs['result'].data = json.dumps(result)
             return response
