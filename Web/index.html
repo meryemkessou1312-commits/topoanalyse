@@ -1147,6 +1147,16 @@ ${JSON.stringify(geometry)}
     })
     .then(result => {
       console.log("Profile result:", result);
+      
+      // ✅ VÉRIFIER S'IL Y A UNE ERREUR
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      
+      if (!result.profile || result.profile.length === 0) {
+        throw new Error("Aucun point valide dans le profil");
+      }
+      
       const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
       lastProfile = result.profile;
       showChart(result.profile);
@@ -1156,7 +1166,7 @@ ${JSON.stringify(geometry)}
     })
     .catch(e => {
       console.error("Erreur profil:", e);
-      updateStatus(`❌ Erreur: ${e.message}`, "error");
+      updateStatus(`❌ ${e.message}`, "error");  // ✅ AFFICHER L'ERREUR
     });
   }
 
